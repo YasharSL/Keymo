@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Keymo/Keymo.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Keymo.Tests/Keymo.Tests.csproj" />
+  </Folder>
+</Solution>
