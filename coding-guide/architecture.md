@@ -18,8 +18,8 @@
 |---|---|---|
 | `Program` | `Main` | single-instance mutex, app bootstrap |
 | `TrayApp` | constructed and run | tray icon, menu, dialogs, routing a key press to hotkeys and modes |
-| `KeyboardHook` | `new(handler)`, `Paused`, `Dispose` | low-level hook, modifier state, Alt-menu suppression |
-| `Input` | `Scroll`, `Click`, `TapKey` | `SendInput` structs and flags |
+| `KeyboardHook` | `new(handler)`, `Paused`, `Dispose` | low-level hook, modifier state (incl. an Alt held but lifted by a scroll), Alt-menu suppression |
+| `Input` | `Scroll`, `Click`, `TapKey`, `AltMenuMaskKey` | `SendInput` structs and flags, lifting a held Alt so the wheel arrives plain |
 | `CursorMode` | `Toggle`, `TurnOn`, `HandleKey` | badge window, cursor follow timer, arrow/scroll/click mapping |
 | `GridOverlay` | `Toggle`, `HandleKey`, `Jumped` event | overlay placement, painting, cursor jump |
 | `GridSelection` (pure) | `Press`, `Target`, `CellBounds`, `Reset` | column/row state machine and cell geometry |

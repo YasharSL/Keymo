@@ -12,14 +12,16 @@ internal sealed class KeyboardHook : IDisposable
     private const int LowLevelKeyboardHook = 13;
     private const int KeyDownMessage = 0x0100;
     private const int SystemKeyDownMessage = 0x0104;
-
-    // A key code no keyboard has. Tapped while Alt is held so the focused app
-    // does not open its menu bar when Alt comes up after a swallowed key.
-    private const Keys AltMenuMaskKey = (Keys)0xE8;
+    private const int FlagsOffset = 8;
+    private const int InjectedFlag = 0x10;
 
     private readonly Func<Keys, bool> _onKeyDown;
     private readonly HookProc _callback; // Field keeps the delegate alive while Windows holds it.
     private readonly IntPtr _handle;
+
+    // True while the user still holds Alt but an injected key-up (from Input.Scroll) has lifted it
+    // as far as Windows is concerned, so the system key state no longer reports it.
+    private bool _altHeldButLifted;
 
     public KeyboardHook(Func<Keys, bool> onKeyDown)
     {
@@ -41,32 +43,44 @@ internal sealed class KeyboardHook : IDisposable
 
     private IntPtr Callback(int code, IntPtr message, IntPtr data)
     {
-        bool isKeyDown = message == KeyDownMessage || message == SystemKeyDownMessage;
-        if (code >= 0 && isKeyDown && !Paused && Swallows(data))
+        if (code >= 0)
         {
-            return 1;
+            bool isKeyDown = message == KeyDownMessage || message == SystemKeyDownMessage;
+            var key = (Keys)Marshal.ReadInt32(data);
+            bool injected = (Marshal.ReadInt32(data, FlagsOffset) & InjectedFlag) != 0;
+            if (key is Keys.Menu or Keys.LMenu or Keys.RMenu)
+            {
+                // Any real Alt press or release, or an injected press, ends the lifted state.
+                _altHeldButLifted = injected && !isKeyDown;
+            }
+
+            if (isKeyDown && !Paused && Swallows(key))
+            {
+                return 1;
+            }
         }
 
         return CallNextHookEx(_handle, code, message, data);
     }
 
-    private bool Swallows(IntPtr data)
+    private bool Swallows(Keys key)
     {
-        var key = (Keys)Marshal.ReadInt32(data);
-        if (key == AltMenuMaskKey || IsModifier(key))
+        if (key == Input.AltMenuMaskKey || IsModifier(key))
         {
             return false;
         }
 
-        Keys modifiers = Held(Keys.ControlKey, Keys.Control) | Held(Keys.ShiftKey, Keys.Shift) | Held(Keys.Menu, Keys.Alt);
+        Keys alt = _altHeldButLifted ? Keys.Alt : Held(Keys.Menu, Keys.Alt);
+        Keys modifiers = Held(Keys.ControlKey, Keys.Control) | Held(Keys.ShiftKey, Keys.Shift) | alt;
         if (!_onKeyDown(key | modifiers))
         {
             return false;
         }
 
+        // Without this the focused app opens its menu bar when Alt comes up after a swallowed key.
         if (modifiers.HasFlag(Keys.Alt))
         {
-            Input.TapKey(AltMenuMaskKey);
+            Input.TapKey(Input.AltMenuMaskKey);
         }
 
         return true;
