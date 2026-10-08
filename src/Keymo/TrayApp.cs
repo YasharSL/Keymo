@@ -15,6 +15,7 @@ internal sealed class TrayApp : ApplicationContext
     public TrayApp()
     {
         _cursorMode = new CursorMode(_settings);
+        _grid.Jumped += OnGridJumped;
         _tray = new NotifyIcon
         {
             Icon = KeyboardGlyph.ToIcon(),
@@ -58,6 +59,19 @@ internal sealed class TrayApp : ApplicationContext
         return _grid.HandleKey(keyData) || _cursorMode.HandleKey(keyData);
     }
 
+    private void OnGridJumped()
+    {
+        switch (_settings.AfterGridJump)
+        {
+            case AfterGridJump.TurnOnCursorMode:
+                _cursorMode.TurnOn();
+                break;
+            case AfterGridJump.Click:
+                Input.Click(rightButton: false);
+                break;
+        }
+    }
+
     private ContextMenuStrip BuildMenu()
     {
         var menu = new ContextMenuStrip();
@@ -98,9 +112,16 @@ internal sealed class TrayApp : ApplicationContext
 
         Grid: {Settings.HotkeyText(_settings.GridHotkey)} shows and hides it
             First letter picks the column, second letter picks the row
-            Enter: jump to the middle of the cell
+            Enter: jump to the middle of the cell, then {AfterJumpText()}
             Esc: go one step back, or close the grid
         """;
+
+    private string AfterJumpText() => _settings.AfterGridJump switch
+    {
+        AfterGridJump.TurnOnCursorMode => "turn on cursor mode",
+        AfterGridJump.Click => "click there",
+        _ => "do nothing more",
+    };
 
     private static void ShowMessage(string text) =>
         MessageBox.Show(text, AppName, MessageBoxButtons.OK, MessageBoxIcon.Information);

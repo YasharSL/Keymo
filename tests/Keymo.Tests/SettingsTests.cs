@@ -22,6 +22,33 @@ public sealed class SettingsTests : IDisposable
         Assert.Equal(Keys.Control | Keys.Alt | Keys.K, settings.CursorHotkey);
         Assert.Equal(Keys.Control | Keys.Alt | Keys.G, settings.GridHotkey);
         Assert.Equal((10, 100, 1), (settings.SmallStep, settings.BigStep, settings.ScrollNotches));
+        Assert.Equal(AfterGridJump.TurnOnCursorMode, settings.AfterGridJump);
+    }
+
+    [Theory]
+    [InlineData("TurnOnCursorMode")]
+    [InlineData("Click")]
+    [InlineData("Nothing")]
+    public void After_grid_jump_choice_is_saved_by_name(string name)
+    {
+        AfterGridJump choice = Enum.Parse<AfterGridJump>(name);
+
+        new Settings { AfterGridJump = choice }.Save(FilePath);
+
+        Assert.Contains($"\"{name}\"", File.ReadAllText(FilePath));
+        Assert.Equal(choice, Settings.Load(FilePath).AfterGridJump);
+    }
+
+    [Fact]
+    public void Settings_file_from_before_a_setting_existed_keeps_its_values()
+    {
+        Directory.CreateDirectory(_folder);
+        File.WriteAllText(FilePath, """{ "SmallStep": 7 }""");
+
+        Settings settings = Settings.Load(FilePath);
+
+        Assert.Equal(7, settings.SmallStep);
+        Assert.Equal(AfterGridJump.TurnOnCursorMode, settings.AfterGridJump);
     }
 
     [Fact]

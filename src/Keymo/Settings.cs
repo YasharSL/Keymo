@@ -11,7 +11,7 @@ internal sealed class Settings
     private static readonly JsonSerializerOptions Json = new()
     {
         WriteIndented = true,
-        Converters = { new HotkeyJson() },
+        Converters = { new HotkeyJson(), new JsonStringEnumConverter() },
         Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, // Keeps "+" in hotkeys readable; the file is never put in HTML.
     };
 
@@ -30,6 +30,8 @@ internal sealed class Settings
 
     /// <summary>Mouse wheel notches per Alt+arrow press.</summary>
     public int ScrollNotches { get; set; } = 1;
+
+    public AfterGridJump AfterGridJump { get; set; } = AfterGridJump.TurnOnCursorMode;
 
     /// <summary>A hotkey as people write it, e.g. "Ctrl+Alt+K".</summary>
     public static string HotkeyText(Keys hotkey) => KeyNames.ConvertToInvariantString(hotkey) ?? string.Empty;

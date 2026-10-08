@@ -20,8 +20,8 @@
 | `TrayApp` | constructed and run | tray icon, menu, dialogs, routing a key press to hotkeys and modes |
 | `KeyboardHook` | `new(handler)`, `Paused`, `Dispose` | low-level hook, modifier state, Alt-menu suppression |
 | `Input` | `Scroll`, `Click`, `TapKey` | `SendInput` structs and flags |
-| `CursorMode` | `Toggle`, `HandleKey` | badge window, cursor follow timer, arrow/scroll/click mapping |
-| `GridOverlay` | `Toggle`, `HandleKey` | overlay placement, painting, cursor jump |
+| `CursorMode` | `Toggle`, `TurnOn`, `HandleKey` | badge window, cursor follow timer, arrow/scroll/click mapping |
+| `GridOverlay` | `Toggle`, `HandleKey`, `Jumped` event | overlay placement, painting, cursor jump |
 | `GridSelection` (pure) | `Press`, `Target`, `CellBounds`, `Reset` | column/row state machine and cell geometry |
 | `OverlayForm` | base class | non-activating, click-through, topmost window styles |
 | `KeyboardGlyph` | `Draw`, `ToIcon` | the keyboard picture used by badge and tray |
@@ -34,6 +34,7 @@
 `Program` -> `TrayApp` -> modes (`CursorMode`, `GridOverlay`) and dialogs -> leaf modules (`Input`, `GridSelection`, `Settings`, `OverlayForm`, `KeyboardGlyph`, `UpdateCheck`).
 
 - Leaf modules never reference `TrayApp` or the modes.
+- The modes do not know each other. `TrayApp` decides what follows a grid jump (`GridOverlay.Jumped` + `Settings.AfterGridJump`).
 - Only `TrayApp` knows about `KeyboardHook`. Modes receive keys through `HandleKey(Keys)` and return whether they consumed the key.
 - Pure modules (`GridSelection`, `Settings` parsing, `UpdateCheck.ParseLatest`) touch no window, cursor or network.
 

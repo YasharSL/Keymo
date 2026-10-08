@@ -14,6 +14,7 @@ internal sealed class SettingsForm : Form
     private readonly NumericUpDown _smallStep;
     private readonly NumericUpDown _bigStep;
     private readonly NumericUpDown _scrollNotches;
+    private readonly ComboBox _afterGridJump;
 
     public SettingsForm(Settings settings)
     {
@@ -32,8 +33,21 @@ internal sealed class SettingsForm : Form
         _smallStep = AddNumber("Arrow step (pixels)", settings.SmallStep, MaxStepPixels);
         _bigStep = AddNumber("Shift+Arrow step (pixels)", settings.BigStep, MaxStepPixels);
         _scrollNotches = AddNumber("Scroll speed (wheel notches)", settings.ScrollNotches, MaxScrollNotches);
+        _afterGridJump = AddChoice("After a grid jump", AfterGridJumpChoices, (int)settings.AfterGridJump);
         AddButtons();
         Controls.Add(_rows);
+    }
+
+    // In the order of the AfterGridJump values, so a choice's position is its value.
+    private static readonly string[] AfterGridJumpChoices = ["Turn on cursor mode", "Click", "Do nothing"];
+
+    private ComboBox AddChoice(string label, string[] choices, int selected)
+    {
+        var box = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = FieldWidth };
+        box.Items.AddRange(choices);
+        box.SelectedIndex = Math.Clamp(selected, 0, choices.Length - 1);
+        AddRow(label, box);
+        return box;
     }
 
     private TextBox AddHotkey(string label, Keys hotkey)
@@ -90,6 +104,7 @@ internal sealed class SettingsForm : Form
         _settings.SmallStep = (int)_smallStep.Value;
         _settings.BigStep = (int)_bigStep.Value;
         _settings.ScrollNotches = (int)_scrollNotches.Value;
+        _settings.AfterGridJump = (AfterGridJump)_afterGridJump.SelectedIndex;
         try
         {
             _settings.Save(Settings.DefaultPath);

@@ -29,6 +29,12 @@ internal sealed class CursorMode : IDisposable
             return;
         }
 
+        TurnOn();
+    }
+
+    /// <summary>Activates the mode; does nothing if it is already active.</summary>
+    public void TurnOn()
+    {
         _badge.MoveToCursor();
         _badge.Show();
         _follow.Start();

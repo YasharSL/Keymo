@@ -24,6 +24,9 @@ internal sealed class GridOverlay : OverlayForm
         BackColor = Color.Black;
     }
 
+    /// <summary>Raised after Enter has moved the cursor to the picked cell and the grid has closed.</summary>
+    public event Action? Jumped;
+
     public void Toggle()
     {
         if (Visible)
@@ -58,6 +61,7 @@ internal sealed class GridOverlay : OverlayForm
             case GridKeyResult.Committed when _selection.Target(Bounds) is Point target:
                 Cursor.Position = target;
                 Hide();
+                Jumped?.Invoke();
                 break;
         }
 
