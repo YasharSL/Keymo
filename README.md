@@ -90,3 +90,7 @@ Releases are cut by pushing a `v*` tag: CI builds `Keymo.exe` and attaches it to
 - Windows only.
 - Keymo cannot send input to windows running as administrator unless Keymo itself is run as administrator (a Windows rule).
 - Mixed-DPI multi-monitor setups have not been tested.
+
+## License
+
+[MIT](LICENSE)
