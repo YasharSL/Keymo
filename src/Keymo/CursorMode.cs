@@ -43,6 +43,12 @@ internal sealed class CursorMode : IDisposable
         }
 
         Keys key = keyData & Keys.KeyCode;
+        if (key == Keys.Escape)
+        {
+            Toggle();
+            return true;
+        }
+
         if (key == Keys.Enter)
         {
             Input.Click(rightButton: keyData.HasFlag(Keys.Shift));

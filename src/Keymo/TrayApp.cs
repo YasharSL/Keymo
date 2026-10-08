@@ -94,6 +94,7 @@ internal sealed class TrayApp : ApplicationContext
             Shift+Arrows: move in big steps
             Alt+Arrows: scroll
             Enter: click, Shift+Enter: right-click
+            Esc: turn cursor mode off
 
         Grid: {Settings.HotkeyText(_settings.GridHotkey)} shows and hides it
             First letter picks the column, second letter picks the row
