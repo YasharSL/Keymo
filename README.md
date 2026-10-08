@@ -37,15 +37,15 @@ Press **Ctrl+Alt+G**. A see-through 20 x 20 grid covers the screen the cursor is
 2. Type the **row** letter. The cell is highlighted.
 3. Press **Enter**. The cursor jumps to the middle of the cell and the grid closes.
 
-**Esc** goes one step back: it clears the row, then the column, then closes the grid. **Ctrl+Alt+G** closes it at any point.
+After the jump Keymo turns on cursor mode, so you can fine-tune with the arrows and click with Enter straight away. In Settings, "After a grid jump" changes this to **Click** (Enter jumps and left-clicks in one go) or **Do nothing**.
 
-The two modes work together: jump close with the grid, fine-tune with the arrows, click with Enter.
+**Esc** goes one step back: it clears the row, then the column, then closes the grid. **Ctrl+Alt+G** closes it at any point.
 
 ## Tray menu
 
 Right-click the tray icon:
 
-- **Settings** changes both hotkeys, the two step sizes and the scroll speed. Click a hotkey box and press the new combination (it must include Ctrl or Alt).
+- **Settings** changes both hotkeys, the two step sizes, the scroll speed and what happens after a grid jump. Click a hotkey box and press the new combination (it must include Ctrl or Alt).
 - **Help** lists the keys with your current hotkeys.
 - **Check for updates** compares your version with the latest GitHub release.
 - **About** and **Exit**.
