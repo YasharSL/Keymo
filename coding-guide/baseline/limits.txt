@@ -1,0 +1,1 @@
+# Files allowed to exceed the length limits (one repo-relative path per line). Keep empty.
