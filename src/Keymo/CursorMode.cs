@@ -64,7 +64,16 @@ internal sealed class CursorMode : IDisposable
         Keys key = keyData & Keys.KeyCode;
         if (key == Keys.Escape)
         {
-            Toggle();
+            // Esc first drops a locked drag; only with nothing locked does it leave the mode.
+            if (_dragLocked)
+            {
+                ReleaseButton();
+            }
+            else
+            {
+                Toggle();
+            }
+
             return true;
         }
 

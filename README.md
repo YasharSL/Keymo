@@ -26,8 +26,8 @@ Press **Ctrl+Alt+K**. A tiny keyboard badge appears next to the cursor to show t
 | Enter | Left click |
 | Shift+Enter | Right click |
 | Hold Enter + Arrows | Click and drag: the button stays down until you let go of Enter |
-| Alt+Enter | Drag lock: the left button goes down and stays down, so you can move without holding anything. Enter or Alt+Enter drops it |
-| Esc or Ctrl+Alt+K | Turn cursor mode off |
+| Alt+Enter | Drag lock: the left button goes down and stays down, so you can move without holding anything. Enter, Alt+Enter or Esc drops it |
+| Esc or Ctrl+Alt+K | Turn cursor mode off (with a drag locked, Esc drops the drag first) |
 
 While a mouse button is held down, by Enter or by drag lock, the badge shows a small red dot in its top right corner.
 
