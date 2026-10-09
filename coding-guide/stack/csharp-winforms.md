@@ -15,5 +15,5 @@
 - S-05 A hotkey is a WinForms `Keys` value (key code plus modifier flags). Text form comes only from `Settings.HotkeyText`.
 - S-06 P/Invoke: `DllImport` declarations are `private static extern` inside the module that uses them, with `SetLastError = true` when the error is read. [D-04]
 - S-07 No public settable properties on `Control`-derived types (WFO1000); pass data through constructors or methods.
-- S-08 Mouse and key injection goes through `Input`. Cursor position goes through `Cursor.Position`.
+- S-08 Mouse and key injection goes through `Input`. The cursor is moved only with `Input.MoveTo` (real mouse input: it un-hides a cursor Windows hid, and drags follow it); `Cursor.Position` is for reading.
 - S-09 No new NuGet packages in the app project without a line in the report explaining why the framework is not enough.

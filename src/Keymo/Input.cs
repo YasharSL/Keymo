@@ -8,6 +8,10 @@ internal static class Input
     private const int WheelNotch = 120;
     private const uint MouseType = 0;
     private const uint KeyboardType = 1;
+    private const int AbsoluteRange = 65536;
+    private const uint MoveFlag = 0x0001;
+    private const uint WholeDesktopFlag = 0x4000;
+    private const uint AbsoluteFlag = 0x8000;
     private const uint LeftDown = 0x0002;
     private const uint LeftUp = 0x0004;
     private const uint RightDown = 0x0008;
@@ -57,15 +61,39 @@ internal static class Input
 
     public static void Click(bool rightButton)
     {
-        if (rightButton)
-        {
-            Send(Mouse(RightDown), Mouse(RightUp));
-        }
-        else
-        {
-            Send(Mouse(LeftDown), Mouse(LeftUp));
-        }
+        SetButton(rightButton, down: true);
+        SetButton(rightButton, down: false);
     }
+
+    /// <summary>Presses or releases a mouse button and leaves it that way.</summary>
+    public static void SetButton(bool rightButton, bool down)
+    {
+        uint flags = rightButton ? (down ? RightDown : RightUp) : (down ? LeftDown : LeftUp);
+        Send(Mouse(flags));
+    }
+
+    /// <summary>
+    /// Puts the cursor on an exact screen position, as real mouse input. Setting the position alone is not
+    /// input: Windows keeps a cursor hidden that it hid after touch use or sleep, and some apps ignore it mid-drag.
+    /// </summary>
+    public static void MoveTo(Point target)
+    {
+        Rectangle desktop = SystemInformation.VirtualScreen;
+        target.X = Math.Clamp(target.X, desktop.Left, desktop.Right - 1);
+        target.Y = Math.Clamp(target.Y, desktop.Top, desktop.Bottom - 1);
+        Cursor.Position = target;
+
+        NativeInput move = Mouse(MoveFlag | AbsoluteFlag | WholeDesktopFlag);
+        move.Event.Mouse.X = ToAbsolute(target.X - desktop.Left, desktop.Width);
+        move.Event.Mouse.Y = ToAbsolute(target.Y - desktop.Top, desktop.Height);
+        Send(move);
+    }
+
+    /// <summary>
+    /// A pixel offset as the 0..65536 fraction of the desktop that absolute mouse input uses.
+    /// Rounded up, so that Windows scaling it back down lands on the same pixel.
+    /// </summary>
+    internal static int ToAbsolute(int offset, int size) => (int)((((long)offset * AbsoluteRange) + size - 1) / size);
 
     public static void TapKey(Keys key) => Send(Key(key, 0), Key(key, KeyUp));
 

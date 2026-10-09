@@ -59,7 +59,7 @@ internal sealed class GridOverlay : OverlayForm
                 Hide();
                 break;
             case GridKeyResult.Committed when _selection.Target(Bounds) is Point target:
-                Cursor.Position = target;
+                Input.MoveTo(target);
                 Hide();
                 Jumped?.Invoke();
                 break;
