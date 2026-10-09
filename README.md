@@ -26,7 +26,10 @@ Press **Ctrl+Alt+K**. A tiny keyboard badge appears next to the cursor to show t
 | Enter | Left click |
 | Shift+Enter | Right click |
 | Hold Enter + Arrows | Click and drag: the button stays down until you let go of Enter |
+| Alt+Enter | Drag lock: the left button goes down and stays down, so you can move without holding anything. Enter or Alt+Enter drops it |
 | Esc or Ctrl+Alt+K | Turn cursor mode off |
+
+Drag lock is for compact keyboards where the arrows need Fn and cannot be reached while Enter is held.
 
 While the mode is on, only these keys are taken by Keymo. Everything else you type goes to the app as usual.
 

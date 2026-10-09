@@ -112,6 +112,7 @@ internal sealed class TrayApp : ApplicationContext
             Alt+Arrows: scroll
             Enter: click, Shift+Enter: right-click
             Hold Enter and press arrows: drag
+            Alt+Enter: drag lock (button stays down until Enter or Alt+Enter)
             Esc: turn cursor mode off
 
         Grid: {Settings.HotkeyText(_settings.GridHotkey)} shows and hides it

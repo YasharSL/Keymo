@@ -35,17 +35,7 @@ internal static class Input
     /// </summary>
     public static void Scroll(int rightNotches, int upNotches)
     {
-        List<NativeInput> inputs = [];
-        foreach (Keys alt in (Keys[])[Keys.LMenu, Keys.RMenu])
-        {
-            if (GetAsyncKeyState((int)alt) < 0)
-            {
-                inputs.Add(Key(AltMenuMaskKey, 0));
-                inputs.Add(Key(AltMenuMaskKey, KeyUp));
-                inputs.Add(Key(alt, KeyUp | (alt == Keys.RMenu ? ExtendedKey : 0)));
-            }
-        }
-
+        List<NativeInput> inputs = HeldAltLift();
         if (rightNotches != 0)
         {
             inputs.Add(Mouse(HorizontalWheel, rightNotches * WheelNotch));
@@ -65,11 +55,16 @@ internal static class Input
         SetButton(rightButton, down: false);
     }
 
-    /// <summary>Presses or releases a mouse button and leaves it that way.</summary>
+    /// <summary>
+    /// Presses or releases a mouse button and leaves it that way.
+    /// Like the wheel, the button arrives plain: a held Alt is lifted first, so it is not an Alt+click.
+    /// </summary>
     public static void SetButton(bool rightButton, bool down)
     {
         uint flags = rightButton ? (down ? RightDown : RightUp) : (down ? LeftDown : LeftUp);
-        Send(Mouse(flags));
+        List<NativeInput> inputs = HeldAltLift();
+        inputs.Add(Mouse(flags));
+        Send([.. inputs]);
     }
 
     /// <summary>
@@ -96,6 +91,23 @@ internal static class Input
     internal static int ToAbsolute(int offset, int size) => (int)((((long)offset * AbsoluteRange) + size - 1) / size);
 
     public static void TapKey(Keys key) => Send(Key(key, 0), Key(key, KeyUp));
+
+    // Key-ups for every Alt that is down, each preceded by the mask key so the release opens no menu bar.
+    private static List<NativeInput> HeldAltLift()
+    {
+        List<NativeInput> inputs = [];
+        foreach (Keys alt in (Keys[])[Keys.LMenu, Keys.RMenu])
+        {
+            if (GetAsyncKeyState((int)alt) < 0)
+            {
+                inputs.Add(Key(AltMenuMaskKey, 0));
+                inputs.Add(Key(AltMenuMaskKey, KeyUp));
+                inputs.Add(Key(alt, KeyUp | (alt == Keys.RMenu ? ExtendedKey : 0)));
+            }
+        }
+
+        return inputs;
+    }
 
     private static NativeInput Mouse(uint flags, int data = 0) =>
         new() { Type = MouseType, Event = { Mouse = { Flags = flags, Data = data } } };

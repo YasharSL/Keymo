@@ -13,8 +13,9 @@ internal sealed class CursorMode : IDisposable
     private readonly Settings _settings;
     private readonly Badge _badge = new();
     private readonly Timer _follow = new() { Interval = FollowIntervalMs };
-    private bool? _heldButtonIsRight; // Null while Enter holds no mouse button down.
-    private bool _ignoreEnterUntilReleased;
+    private bool? _heldButtonIsRight; // Null while no mouse button is held down.
+    private bool _dragLocked; // The held button stays down after Enter comes up.
+    private bool _enterIsDown; // Tells a fresh Enter press from key repeats.
 
     public CursorMode(Settings settings)
     {
@@ -49,7 +50,7 @@ internal sealed class CursorMode : IDisposable
     /// Tells the mode that Enter is down for another reason (confirming the grid),
     /// so it must not start a click until Enter has come up.
     /// </summary>
-    public void IgnoreHeldEnter() => _ignoreEnterUntilReleased = true;
+    public void IgnoreHeldEnter() => _enterIsDown = true;
 
     /// <summary>Acts on the key press if the mode is active and the key is one of its own. Returns whether it did.</summary>
     public bool HandleKey(Keys keyData)
@@ -68,7 +69,7 @@ internal sealed class CursorMode : IDisposable
 
         if (key == Keys.Enter)
         {
-            PressButton(rightButton: keyData.HasFlag(Keys.Shift));
+            PressEnter(rightButton: keyData.HasFlag(Keys.Shift), lockDrag: keyData.HasFlag(Keys.Alt));
             return true;
         }
 
@@ -92,7 +93,7 @@ internal sealed class CursorMode : IDisposable
         return true;
     }
 
-    /// <summary>Releases the mouse button when Enter comes up. Returns whether a button was being held.</summary>
+    /// <summary>Releases an unlocked mouse button when Enter comes up. Returns whether the Enter press was this mode's.</summary>
     public bool HandleKeyUp(Keys keyData)
     {
         if ((keyData & Keys.KeyCode) != Keys.Enter)
@@ -100,10 +101,14 @@ internal sealed class CursorMode : IDisposable
             return false;
         }
 
-        _ignoreEnterUntilReleased = false;
-        bool wasHolding = _heldButtonIsRight is not null;
-        ReleaseButton();
-        return wasHolding;
+        bool wasDown = _enterIsDown;
+        _enterIsDown = false;
+        if (!_dragLocked)
+        {
+            ReleaseButton();
+        }
+
+        return wasDown;
     }
 
     public void Dispose()
@@ -113,15 +118,25 @@ internal sealed class CursorMode : IDisposable
         _badge.Dispose();
     }
 
-    // Enter holds the button for as long as it is down, so arrows in between drag. Key repeats change nothing.
-    private void PressButton(bool rightButton)
+    // Enter holds the button for as long as it is down, so arrows in between drag.
+    // With lockDrag (Alt+Enter) the button stays down until the next Enter or Alt+Enter, for keyboards
+    // that cannot hold Enter and reach the arrows at once. Key repeats change nothing.
+    private void PressEnter(bool rightButton, bool lockDrag)
     {
-        if (_ignoreEnterUntilReleased || _heldButtonIsRight is not null)
+        if (_enterIsDown)
         {
             return;
         }
 
+        _enterIsDown = true;
+        if (_heldButtonIsRight is not null)
+        {
+            ReleaseButton(); // Only a locked drag is still held at a fresh press: this drops it.
+            return;
+        }
+
         _heldButtonIsRight = rightButton;
+        _dragLocked = lockDrag;
         Input.SetButton(rightButton, down: true);
     }
 
@@ -130,6 +145,7 @@ internal sealed class CursorMode : IDisposable
         if (_heldButtonIsRight is bool rightButton)
         {
             _heldButtonIsRight = null;
+            _dragLocked = false;
             Input.SetButton(rightButton, down: false);
         }
     }
