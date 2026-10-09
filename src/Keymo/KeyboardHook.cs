@@ -4,8 +4,8 @@ using System.Runtime.InteropServices;
 namespace Keymo;
 
 /// <summary>
-/// Sees every key press system-wide and lets the handler swallow it.
-/// The handler gets the key with its Ctrl/Shift/Alt flags and returns true to consume it.
+/// Sees every key press and release system-wide and lets the handler swallow it.
+/// The handler gets the key with its Ctrl/Shift/Alt flags and whether it went down, and returns true to consume it.
 /// </summary>
 internal sealed class KeyboardHook : IDisposable
 {
@@ -15,7 +15,7 @@ internal sealed class KeyboardHook : IDisposable
     private const int FlagsOffset = 8;
     private const int InjectedFlag = 0x10;
 
-    private readonly Func<Keys, bool> _onKeyDown;
+    private readonly Func<Keys, bool, bool> _onKey;
     private readonly HookProc _callback; // Field keeps the delegate alive while Windows holds it.
     private readonly IntPtr _handle;
 
@@ -23,9 +23,9 @@ internal sealed class KeyboardHook : IDisposable
     // as far as Windows is concerned, so the system key state no longer reports it.
     private bool _altHeldButLifted;
 
-    public KeyboardHook(Func<Keys, bool> onKeyDown)
+    public KeyboardHook(Func<Keys, bool, bool> onKey)
     {
-        _onKeyDown = onKeyDown;
+        _onKey = onKey;
         _callback = Callback;
         _handle = SetWindowsHookEx(LowLevelKeyboardHook, _callback, GetModuleHandle(null), 0);
         if (_handle == IntPtr.Zero)
@@ -54,7 +54,7 @@ internal sealed class KeyboardHook : IDisposable
                 _altHeldButLifted = injected && !isKeyDown;
             }
 
-            if (isKeyDown && !Paused && Swallows(key))
+            if (!Paused && Swallows(key, isKeyDown))
             {
                 return 1;
             }
@@ -63,7 +63,7 @@ internal sealed class KeyboardHook : IDisposable
         return CallNextHookEx(_handle, code, message, data);
     }
 
-    private bool Swallows(Keys key)
+    private bool Swallows(Keys key, bool isKeyDown)
     {
         if (key == Input.AltMenuMaskKey || IsModifier(key))
         {
@@ -72,13 +72,13 @@ internal sealed class KeyboardHook : IDisposable
 
         Keys alt = _altHeldButLifted ? Keys.Alt : Held(Keys.Menu, Keys.Alt);
         Keys modifiers = Held(Keys.ControlKey, Keys.Control) | Held(Keys.ShiftKey, Keys.Shift) | alt;
-        if (!_onKeyDown(key | modifiers))
+        if (!_onKey(key | modifiers, isKeyDown))
         {
             return false;
         }
 
         // Without this the focused app opens its menu bar when Alt comes up after a swallowed key.
-        if (modifiers.HasFlag(Keys.Alt))
+        if (isKeyDown && modifiers.HasFlag(Keys.Alt))
         {
             Input.TapKey(Input.AltMenuMaskKey);
         }

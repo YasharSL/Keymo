@@ -13,6 +13,8 @@ internal sealed class CursorMode : IDisposable
     private readonly Settings _settings;
     private readonly Badge _badge = new();
     private readonly Timer _follow = new() { Interval = FollowIntervalMs };
+    private bool? _heldButtonIsRight; // Null while Enter holds no mouse button down.
+    private bool _ignoreEnterUntilReleased;
 
     public CursorMode(Settings settings)
     {
@@ -24,6 +26,7 @@ internal sealed class CursorMode : IDisposable
     {
         if (_badge.Visible)
         {
+            ReleaseButton();
             _follow.Stop();
             _badge.Hide();
             return;
@@ -35,12 +38,20 @@ internal sealed class CursorMode : IDisposable
     /// <summary>Activates the mode; does nothing if it is already active.</summary>
     public void TurnOn()
     {
+        // Counts as mouse input, which makes Windows show a cursor it hid after touch use or sleep.
+        Input.MoveTo(Cursor.Position);
         _badge.MoveToCursor();
         _badge.Show();
         _follow.Start();
     }
 
-    /// <summary>Acts on the key if the mode is active and the key is one of its own. Returns whether it did.</summary>
+    /// <summary>
+    /// Tells the mode that Enter is down for another reason (confirming the grid),
+    /// so it must not start a click until Enter has come up.
+    /// </summary>
+    public void IgnoreHeldEnter() => _ignoreEnterUntilReleased = true;
+
+    /// <summary>Acts on the key press if the mode is active and the key is one of its own. Returns whether it did.</summary>
     public bool HandleKey(Keys keyData)
     {
         if (!_badge.Visible)
@@ -57,7 +68,7 @@ internal sealed class CursorMode : IDisposable
 
         if (key == Keys.Enter)
         {
-            Input.Click(rightButton: keyData.HasFlag(Keys.Shift));
+            PressButton(rightButton: keyData.HasFlag(Keys.Shift));
             return true;
         }
 
@@ -74,17 +85,53 @@ internal sealed class CursorMode : IDisposable
         else
         {
             int step = keyData.HasFlag(Keys.Shift) ? _settings.BigStep : _settings.SmallStep;
-            Cursor.Position += new Size(direction.Width * step, direction.Height * step);
+            Input.MoveTo(Cursor.Position + new Size(direction.Width * step, direction.Height * step));
             _badge.MoveToCursor();
         }
 
         return true;
     }
 
+    /// <summary>Releases the mouse button when Enter comes up. Returns whether a button was being held.</summary>
+    public bool HandleKeyUp(Keys keyData)
+    {
+        if ((keyData & Keys.KeyCode) != Keys.Enter)
+        {
+            return false;
+        }
+
+        _ignoreEnterUntilReleased = false;
+        bool wasHolding = _heldButtonIsRight is not null;
+        ReleaseButton();
+        return wasHolding;
+    }
+
     public void Dispose()
     {
+        ReleaseButton();
         _follow.Dispose();
         _badge.Dispose();
+    }
+
+    // Enter holds the button for as long as it is down, so arrows in between drag. Key repeats change nothing.
+    private void PressButton(bool rightButton)
+    {
+        if (_ignoreEnterUntilReleased || _heldButtonIsRight is not null)
+        {
+            return;
+        }
+
+        _heldButtonIsRight = rightButton;
+        Input.SetButton(rightButton, down: true);
+    }
+
+    private void ReleaseButton()
+    {
+        if (_heldButtonIsRight is bool rightButton)
+        {
+            _heldButtonIsRight = null;
+            Input.SetButton(rightButton, down: false);
+        }
     }
 
     private static Size? DirectionOf(Keys key) => key switch

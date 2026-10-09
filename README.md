@@ -25,6 +25,7 @@ Press **Ctrl+Alt+K**. A tiny keyboard badge appears next to the cursor to show t
 | Alt+Arrows | Scroll up, down, left, right |
 | Enter | Left click |
 | Shift+Enter | Right click |
+| Hold Enter + Arrows | Click and drag: the button stays down until you let go of Enter |
 | Esc or Ctrl+Alt+K | Turn cursor mode off |
 
 While the mode is on, only these keys are taken by Keymo. Everything else you type goes to the app as usual.

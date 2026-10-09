@@ -26,7 +26,7 @@ internal sealed class TrayApp : ApplicationContext
         _tray.DoubleClick += (_, _) => ShowSettings();
 
         // Last, so no key waits on the hook while the rest of startup is still running.
-        _hook = new KeyboardHook(OnKeyDown);
+        _hook = new KeyboardHook(OnKey);
     }
 
     protected override void Dispose(bool disposing)
@@ -41,6 +41,8 @@ internal sealed class TrayApp : ApplicationContext
 
         base.Dispose(disposing);
     }
+
+    private bool OnKey(Keys keyData, bool isDown) => isDown ? OnKeyDown(keyData) : _cursorMode.HandleKeyUp(keyData);
 
     private bool OnKeyDown(Keys keyData)
     {
@@ -61,6 +63,7 @@ internal sealed class TrayApp : ApplicationContext
 
     private void OnGridJumped()
     {
+        _cursorMode.IgnoreHeldEnter();
         switch (_settings.AfterGridJump)
         {
             case AfterGridJump.TurnOnCursorMode:
@@ -108,6 +111,7 @@ internal sealed class TrayApp : ApplicationContext
             Shift+Arrows: move in big steps
             Alt+Arrows: scroll
             Enter: click, Shift+Enter: right-click
+            Hold Enter and press arrows: drag
             Esc: turn cursor mode off
 
         Grid: {Settings.HotkeyText(_settings.GridHotkey)} shows and hides it

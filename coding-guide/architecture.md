@@ -19,8 +19,8 @@
 | `Program` | `Main` | single-instance mutex, app bootstrap |
 | `TrayApp` | constructed and run | tray icon, menu, dialogs, routing a key press to hotkeys and modes |
 | `KeyboardHook` | `new(handler)`, `Paused`, `Dispose` | low-level hook, modifier state (incl. an Alt held but lifted by a scroll), Alt-menu suppression |
-| `Input` | `Scroll`, `Click`, `TapKey`, `AltMenuMaskKey` | `SendInput` structs and flags, lifting a held Alt so the wheel arrives plain |
-| `CursorMode` | `Toggle`, `TurnOn`, `HandleKey` | badge window, cursor follow timer, arrow/scroll/click mapping |
+| `Input` | `MoveTo`, `Scroll`, `Click`, `SetButton`, `TapKey`, `AltMenuMaskKey` | `SendInput` structs and flags, lifting a held Alt so the wheel arrives plain, exact absolute moves |
+| `CursorMode` | `Toggle`, `TurnOn`, `HandleKey`, `HandleKeyUp`, `IgnoreHeldEnter` | badge window, cursor follow timer, arrow/scroll mapping, holding a button while Enter is down |
 | `GridOverlay` | `Toggle`, `HandleKey`, `Jumped` event | overlay placement, painting, cursor jump |
 | `GridSelection` (pure) | `Press`, `Target`, `CellBounds`, `Reset` | column/row state machine and cell geometry |
 | `OverlayForm` | base class | non-activating, click-through, topmost window styles |
@@ -35,14 +35,14 @@
 
 - Leaf modules never reference `TrayApp` or the modes.
 - The modes do not know each other. `TrayApp` decides what follows a grid jump (`GridOverlay.Jumped` + `Settings.AfterGridJump`).
-- Only `TrayApp` knows about `KeyboardHook`. Modes receive keys through `HandleKey(Keys)` and return whether they consumed the key.
+- Only `TrayApp` knows about `KeyboardHook`. Modes receive key presses through `HandleKey(Keys)` (and `CursorMode` releases through `HandleKeyUp`) and return whether they consumed the key.
 - Pure modules (`GridSelection`, `Settings` parsing, `UpdateCheck.ParseLatest`) touch no window, cursor or network.
 
 ## Seam register
 
 | Seam | Adapters | Why it exists |
 |---|---|---|
-| `KeyboardHook` handler (`Func<Keys, bool>`) | `TrayApp.OnKeyDown` | keeps hook plumbing apart from what keys mean |
+| `KeyboardHook` handler (`Func<Keys, bool, bool>`) | `TrayApp.OnKey` | keeps hook plumbing apart from what keys mean |
 | `Settings.Load/Save(path)` | real AppData path, temp path in tests | file format testable without touching the user's profile |
 
 No other seams. Add one only when a second adapter actually exists.
