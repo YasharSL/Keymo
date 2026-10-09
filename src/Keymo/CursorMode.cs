@@ -1,3 +1,4 @@
+using System.Drawing.Drawing2D;
 using Timer = System.Windows.Forms.Timer;
 
 namespace Keymo;
@@ -138,6 +139,7 @@ internal sealed class CursorMode : IDisposable
         _heldButtonIsRight = rightButton;
         _dragLocked = lockDrag;
         Input.SetButton(rightButton, down: true);
+        _badge.ShowHolding(true);
     }
 
     private void ReleaseButton()
@@ -147,6 +149,7 @@ internal sealed class CursorMode : IDisposable
             _heldButtonIsRight = null;
             _dragLocked = false;
             Input.SetButton(rightButton, down: false);
+            _badge.ShowHolding(false);
         }
     }
 
@@ -165,7 +168,9 @@ internal sealed class CursorMode : IDisposable
         private const double BadgeOpacity = 0.9;
         private const int StandardDpi = 96;
         private static readonly Size BaseSize = new(22, 14);
+        private const float HoldDotShare = 0.45f;
         private static readonly Size BaseOffset = new(14, 18);
+        private bool _holding;
 
         public Badge()
             : base(BadgeOpacity)
@@ -179,7 +184,29 @@ internal sealed class CursorMode : IDisposable
             Location = Cursor.Position + Scale(BaseOffset, dpi);
         }
 
-        protected override void OnPaint(PaintEventArgs e) => KeyboardGlyph.Draw(e.Graphics, ClientRectangle);
+        /// <summary>Shows or clears the red dot that says a mouse button is being held down.</summary>
+        public void ShowHolding(bool holding)
+        {
+            _holding = holding;
+            Invalidate();
+        }
+
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            KeyboardGlyph.Draw(e.Graphics, ClientRectangle);
+            if (!_holding)
+            {
+                return;
+            }
+
+            // A red dot in the top right corner, ringed in the body colour so it stands out from the keys.
+            int diameter = (int)(ClientSize.Height * HoldDotShare);
+            var dot = new Rectangle(ClientSize.Width - diameter - 1, 1, diameter, diameter);
+            e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+            using var ring = new SolidBrush(KeyboardGlyph.Body);
+            e.Graphics.FillEllipse(ring, Rectangle.Inflate(dot, 1, 1));
+            e.Graphics.FillEllipse(Brushes.Red, dot);
+        }
 
         private static Size Scale(Size size, int dpi) => new(size.Width * dpi / StandardDpi, size.Height * dpi / StandardDpi);
     }

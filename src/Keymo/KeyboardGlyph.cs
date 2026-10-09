@@ -7,7 +7,9 @@ internal static class KeyboardGlyph
     private const int KeyRows = 2;
     private const int IconSize = 32;
 
-    private static readonly Color Body = Color.FromArgb(32, 32, 36);
+    /// <summary>The dark colour of the keyboard's body.</summary>
+    public static readonly Color Body = Color.FromArgb(32, 32, 36);
+
     private static readonly Color Keycaps = Color.White;
 
     /// <summary>Draws a keyboard filling <paramref name="box"/>: a dark body, two rows of keys and a space bar.</summary>

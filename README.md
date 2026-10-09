@@ -29,6 +29,8 @@ Press **Ctrl+Alt+K**. A tiny keyboard badge appears next to the cursor to show t
 | Alt+Enter | Drag lock: the left button goes down and stays down, so you can move without holding anything. Enter or Alt+Enter drops it |
 | Esc or Ctrl+Alt+K | Turn cursor mode off |
 
+While a mouse button is held down, by Enter or by drag lock, the badge shows a small red dot in its top right corner.
+
 Drag lock is for compact keyboards where the arrows need Fn and cannot be reached while Enter is held.
 
 While the mode is on, only these keys are taken by Keymo. Everything else you type goes to the app as usual.
