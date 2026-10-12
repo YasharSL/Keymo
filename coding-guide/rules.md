@@ -48,6 +48,7 @@ Each rule is checked by a tool (named in brackets) or by a checklist item in `ch
 - P-01 The keyboard hook callback does no I/O and nothing slow; Windows drops hooks that stall.
 - P-02 Never swallow a key the user did not ask Keymo to handle. Keymo's own injected mask key always passes through.
 - P-03 Dispose what you create (`Form`, `Timer`, `NotifyIcon`, hooks).
+- P-04 Nothing injects input (`SendInput`) while a hook callback is on the stack: it can deadlock inside Windows and leave an unkillable process. Injection goes through `Input`, which queues it for the message loop during a callback. [test, A5]
 
 ## M - Method
 

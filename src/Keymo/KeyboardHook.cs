@@ -72,15 +72,23 @@ internal sealed class KeyboardHook : IDisposable
 
         Keys alt = _altHeldButLifted ? Keys.Alt : Held(Keys.Menu, Keys.Alt);
         Keys modifiers = Held(Keys.ControlKey, Keys.Control) | Held(Keys.ShiftKey, Keys.Shift) | alt;
-        if (!_onKey(key | modifiers, isKeyDown))
+        Input.EnterHookCallback();
+        try
         {
-            return false;
-        }
+            if (!_onKey(key | modifiers, isKeyDown))
+            {
+                return false;
+            }
 
-        // Without this the focused app opens its menu bar when Alt comes up after a swallowed key.
-        if (isKeyDown && modifiers.HasFlag(Keys.Alt))
+            // Without this the focused app opens its menu bar when Alt comes up after a swallowed key.
+            if (isKeyDown && modifiers.HasFlag(Keys.Alt))
+            {
+                Input.TapKey(Input.AltMenuMaskKey);
+            }
+        }
+        finally
         {
-            Input.TapKey(Input.AltMenuMaskKey);
+            Input.LeaveHookCallback();
         }
 
         return true;

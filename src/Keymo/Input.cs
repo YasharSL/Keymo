@@ -21,6 +21,8 @@ internal static class Input
     private const uint KeyUp = 0x0002;
     private const uint ExtendedKey = 0x0001;
 
+    private static int _hookCallbackDepth; // Only touched on the UI thread, which is also the hook thread.
+
     /// <summary>
     /// A key code no keyboard has. Tapping it between an Alt press and release
     /// stops the focused app from opening its menu bar on the release.
@@ -92,6 +94,14 @@ internal static class Input
 
     public static void TapKey(Keys key) => Send(Key(key, 0), Key(key, KeyUp));
 
+    /// <summary>
+    /// Marks the start of code running inside a keyboard hook callback. Until the matching
+    /// <see cref="LeaveHookCallback"/>, injected input is queued and goes out once the callback has returned.
+    /// </summary>
+    public static void EnterHookCallback() => _hookCallbackDepth++;
+
+    public static void LeaveHookCallback() => _hookCallbackDepth--;
+
     // Key-ups for every Alt that is down, each preceded by the mask key so the release opens no menu bar.
     private static List<NativeInput> HeldAltLift()
     {
@@ -115,8 +125,23 @@ internal static class Input
     private static NativeInput Key(Keys key, uint flags) =>
         new() { Type = KeyboardType, Event = { Keyboard = { KeyCode = (ushort)key, Flags = flags } } };
 
+    // Injecting from inside a keyboard hook callback can deadlock inside Windows: SendInput waits on other apps'
+    // hooks, a second key event re-enters the callback meanwhile, and its SendInput never returns. The process
+    // then hangs and cannot even be killed. So inside a callback the input is only queued for the message loop.
+    private static void Send(params NativeInput[] inputs)
+    {
+        if (_hookCallbackDepth > 0 && SynchronizationContext.Current is { } messageLoop)
+        {
+            messageLoop.Post(_ => SendNow(inputs), null);
+        }
+        else
+        {
+            SendNow(inputs);
+        }
+    }
+
     // A failed injection only loses one click or scroll step, so the result is not checked.
-    private static void Send(params NativeInput[] inputs) =>
+    private static void SendNow(NativeInput[] inputs) =>
         _ = SendInput((uint)inputs.Length, inputs, Marshal.SizeOf<NativeInput>());
 
     [DllImport("user32.dll")]
